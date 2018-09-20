@@ -1,0 +1,23 @@
+{  
+	"name": "TwilioCommunicate",  
+	"description": "Twilio Package",
+	"license": "MIT",
+	"keywords": ["twilio"],  
+	"authors": [  
+		{  
+			"name": "Wolfred Montilla",
+			"email": "wolfrednicolas@gmail.com"
+		}  
+	],  
+	"require": {
+		"twilio/sdk": "dev-master"
+	},  
+	"require-dev": {  
+		"phpunit/phpunit": "4.0.*"
+	},
+	"autoload": { 
+		"psr-4": {
+			"TwilioCommunicate\\": "src"
+		}  
+	}  
+} 
