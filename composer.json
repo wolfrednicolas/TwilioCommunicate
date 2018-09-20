@@ -1,5 +1,5 @@
 {  
-	"name": "TwilioCommunicate",  
+	"name": "wolfred/twilio",  
 	"description": "Twilio Package",
 	"license": "MIT",
 	"keywords": ["twilio"],  
@@ -17,7 +17,7 @@
 	},
 	"autoload": { 
 		"psr-4": {
-			"TwilioCommunicate\\": "src"
+			"Wolfred\\Twilio\\": "src"
 		}  
 	}  
 } 

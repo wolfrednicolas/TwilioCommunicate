@@ -1,5 +1,5 @@
 <?php 
-namespace TwilioCommunicate;
+namespace Wolfred\Twilio;
 
 use Twilio\Rest\Client;
 use Twilio\Exceptions\TwilioException;

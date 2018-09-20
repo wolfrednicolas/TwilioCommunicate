@@ -1,5 +1,5 @@
 <?php
-namespace TwilioCommunicate;
+namespace Wolfred\Twilio;
 
 class Config
 {
