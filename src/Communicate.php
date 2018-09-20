@@ -18,6 +18,13 @@ class Communicate
 		return $bool;  
 	}
 
+	public function createSubaccount($name)
+	{
+		$twilio  = new Client($this->config['accountSid'], $this->config['authToken']);
+		$account = $twilio->api->v2010->accounts
+                              ->create(array("friendlyName" => $name));
+	}
+
 	public function getConfig(){
 		return $this->config;
 	}
