@@ -26,7 +26,6 @@ class Communicate
 		$twilio = new Client($this->config['accountSid'], $this->config['authToken']);
 		$sub_account = $twilio->api->v2010->accounts
                               ->create(array("friendlyName" => $name));
-                              \Log::info('este es el nombre', (array)$name);
         $client = new Client($sub_account->sid, $sub_account->authToken);
 
         $new_key = $client->newKeys
@@ -112,6 +111,17 @@ class Communicate
         $this->conf->setInfrastructureConfig('twilio', 'authentication', $array, $account_id);
 	}
 
+	public function checkPhone($account_id, $phone)
+	{
+		$client=$this->conf->getTwilioClient($account_id);
+    	try {
+  			$number = $client->lookups->phoneNumbers($phone)->fetch();
+  			return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+	}
+
 	public function getConfig(){
 		return $this->config;
 	}
@@ -142,5 +152,4 @@ class Communicate
 			return $e->getMessage();
 		}
 	}
-
 } 
