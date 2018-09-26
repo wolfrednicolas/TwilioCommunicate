@@ -343,18 +343,49 @@ class Communicate
         return $this->config;
     }
 
-    public function getNumbers(){
-        $twilio  = new Client($this->config['accountSid'], $this->config['authToken']);
-        $account = $twilio->api->v2010->accounts($this->config['subaccount'])->fetch();
-        $incomingPhoneNumbers = $account->incomingPhoneNumbers->read();
+    public function listNumbers($account_id){
+        $client = $this->conf->getTwilioClient($account_id); 
+        #$account = $twilio->api->v2010->accounts($this->config['subaccount'])->fetch();
+        $incomingPhoneNumbers = $client->incomingPhoneNumbers->read();
 
-        $n = [];
+        $numbers = [];
         foreach ($incomingPhoneNumbers as $number) {
-            $n[] = (object) [ 'phoneNumber' => $number->phoneNumber,
+            $numbers[] = (object) [ 'phoneNumber' => $number->phoneNumber,
                      'sid'         => $number->sid ];
         }
 
-        return $n;
+        return $numbers;
+    }
+
+    public function logCalls($account_id, $optional)
+    {
+        $client = $this->conf->getTwilioClient($account_id);
+        $logArray = Array();
+        foreach ($client->calls->read($optional) as $call) {
+            $data = $this->conf->getLogData($call);
+            array_push($logArray, $data);
+        }
+        return $logArray;
+    }
+
+    public function twilioLookUp($account_id, $phone, $optional)
+    {
+        $client = $this->conf->getTwilioClient($account_id);
+        $phone_number = $client->lookups->v1->phoneNumbers($phone)
+                                    ->fetch($optional);
+        return $phone_number;
+    }
+
+    public function changeStatusSubAccount($account_id, $status)
+    {
+        \Log::info('eto es status', (array)$status);
+        $data = $this->conf->get("twilio", "authentication", $account_id);
+
+        $twilio = new Client($this->config['accountSid'], $this->config['authToken']);
+
+        $account = $twilio->api->v2010->accounts($data['sid'])
+                              ->update(array("status" => $status));
+        return $account;
     }
 
     public function sendMessage($from, $to, $message)

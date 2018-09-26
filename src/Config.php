@@ -94,4 +94,19 @@ class Config
         return $data;
     }
 
+    public function getLogData($call)
+    {
+        $data = Array(
+            'accountSid' => $call->accountSid,
+            'dateCreated' => $call->dateCreated,
+            'duration' => $call->duration,
+            'status' => $call->status,
+            'price' => $call->price,
+            'from' => $call->from,
+            'to' => $call->to
+        );
+
+        return $data;
+    }
+
 }
