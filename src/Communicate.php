@@ -282,6 +282,63 @@ class Communicate
         }
     }
 
+    public function setAsVoipReceiver($account_id, $number_sid)
+    {
+        $client = $this->conf->getTwilioClient($account_id);
+        $data = $this->conf->get("twilio", "authentication", $account_id);
+        try {
+            $client->incomingPhoneNumbers($number_sid)
+                ->update([
+                    'VoiceApplicationSid' => $data['voip_sid']
+                ]);
+            return true;
+        } catch (\RestException $e) {
+            return "Error inesperado al convertir en VOIP";
+        }
+    }
+
+    public function UnSetAsVoipReceiverAndSetForwarder($account_id, $number_sid){
+
+       $client = $this->conf->getTwilioClient($account_id);
+
+       try {
+
+            $params = [
+                'VoiceUrl'             => "{$this->config['url']}/{$account_id}/infrastructure/phone/calls/initial",
+                'VoiceMethod'          => 'POST',
+
+                'VoiceFallbackUrl'     => "{$this->config['url']}/{$account_id}/infrastructure/phone/calls/initial",
+                'VoiceFallbackMethod'  => 'POST',
+                'VoiceApplicationSid' => null,
+            ];
+
+            $client->incomingPhoneNumbers($number_sid)
+                ->update($params);
+            return true;
+        } catch (\RestException $e) {
+            return "Error inesperado al quitar el numero como VOIP";
+        }
+    }
+
+    public function UnSetAsVoipReceiverAndSetVoicemail($account_id, $number_sid, $url){
+
+       $client = $this->conf->getTwilioClient($account_id); 
+       try {
+            $params = [
+                'VoiceApplicationSid' => null,
+                'voiceFallbackUrl' => $url,
+                'voiceUrl' => $url,
+                'VoiceMethod'          => 'POST',
+            ];
+
+            $client->incomingPhoneNumbers($number_sid)
+                ->update($params);
+            
+        } catch (RestException $e) {
+            return "Error inesperado al setear como voicemail";
+        }
+    }
+
     public function getConfig(){
         return $this->config;
     }
