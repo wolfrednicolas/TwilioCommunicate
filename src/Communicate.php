@@ -122,6 +122,96 @@ class Communicate
         }
 	}
 
+	public function findAvailable($account_id, $area_code)
+    {
+        //area code or country iso
+        $client=$this->conf->getTwilioClient($account_id);
+        try {
+            $length = strlen($area_code);
+            if($length>3){
+            	return false;
+            }
+            if($length == 2){ # search by a country ISO code
+                try {
+                    $numbers = $client->availablePhoneNumbers($area_code)->local->read();
+                    $numbersData = Array();
+
+                    foreach($numbers as $number){
+                        $data = $this->conf->processData($number);
+                        array_push($numbersData, $data);
+                    }
+                    return $numbersData;
+                }catch (\RestException $e) { // Search for Mobile number if any Local found
+                    try{
+                        $numbers = $client->availablePhoneNumbers($area_code)->mobile->read();
+                        $numbersData = Array();
+
+                        foreach($numbers as $number){
+                            $data = $this->conf->processData($number);
+                            array_push($numbersData, $data);
+                        }
+
+                        return $numbersData;
+                    }catch (\RestException $e) {
+                        #$country = DB::table('address_countries')->where('iso',$area_code)->first();
+                        #throw new PhoneNumberSearchException("No phone numbers found for ".$country->name);
+                        return "no Phone numbers availables for this country";
+                    }
+
+                }
+            }else { # numerical area code
+                if($area_code == "787"){ #Puerto rico
+                    $numbers = $client->availablePhoneNumbers('PR')->local->read();
+                    #var_dump($numbers); die();
+                }
+                else{ # search for US local number
+                    $numbers = $client->availablePhoneNumbers('US')->local->read(
+                        array("areaCode" => $area_code)
+                    );
+
+                    if (count($numbers) < 1){ # No US number, search in Canada
+                        $numbers = $client->availablePhoneNumbers('CA')->local->read(
+                            array("areaCode" => $area_code)
+                        );
+                    }
+                } 
+
+                $numbersData = Array();
+
+                foreach($numbers as $number){
+                    $data = $this->conf->processData($number);
+                    array_push($numbersData, $data);
+                }
+
+                return $numbersData;
+            }
+        
+        } catch (\RestException $e) {
+            \Log::info('error de mensaje inesperado', (array)$e->getMessage());
+            \Log::info('error de codigo inesperado', (array)$e->getCode());
+            return "";
+        }
+    }
+
+    public function findNumbersByFeatures($account_id, $iso_country, $options)
+    {
+		//iso country
+		try{
+            $client=$this->conf->getTwilioClient($account_id);
+            $numbers = $client->availablePhoneNumbers($iso_country)->local->read(
+                $options
+            );
+            $numbersData = Array();
+            foreach($numbers as $number){
+                $data = $this->conf->processData($number);
+                array_push($numbersData, $data);
+            }
+        }catch (\RestException $e) {
+            $numbersData =[];
+        }
+        return $numbersData;
+    }
+
 	public function getConfig(){
 		return $this->config;
 	}

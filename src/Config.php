@@ -59,4 +59,22 @@ class Config
         return $client;
     }
 
+    public function processData($number){
+        $data = Array(
+            'friendlyName' => $number->friendlyName,
+            'phoneNumber' => $number->phoneNumber,
+            'lata' => $number->lata,
+            'rateCenter' => $number->rateCenter,
+            'latitude' => $number->latitude,
+            'longitude' => $number->longitude,
+            'region' => $number->region,
+            'postalCode' => $number->postalCode,
+            'isoCountry' => $number->isoCountry,
+            'capabilities' => $number->capabilities,
+            'countryCode' => $number->isoCountry
+        );
+
+        return $data;
+    }
+
 }
