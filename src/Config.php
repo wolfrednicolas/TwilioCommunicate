@@ -42,6 +42,23 @@ class Config
 
     }
 
+    public function get($service, $field, $account_id)
+    {
+        $result = DB::table('infrastructure_config')
+                    ->where('account_id', $account_id)
+                    ->where('service', $service)
+                    ->where('field', $field)
+                    ->first();
+
+                    
+        if (!$result){
+            //throw new ConfigurationNotFoundException("No configuration values found for {$service}.{$field}");
+            return false;
+        }
+        $decoded = json_decode($result->data, true);
+        return $decoded;
+    }
+
     public function getTwilioClient($account_id)
     {
         $phone_data = DB::table('infrastructure_config')

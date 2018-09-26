@@ -7,24 +7,24 @@ use URL;
 
 class Communicate
 {
-	protected $config;
+    protected $config;
 
-	public function __construct(){
-		$config = new Config();
-		$this->config = $config->config;
-		$this->conf = $config;
-	}
+    public function __construct(){
+        $config = new Config();
+        $this->config = $config->config;
+        $this->conf = $config;
+    }
 
-	public function hasInstance($bool = true)  
-	{  
-		return $bool;  
-	}
+    public function hasInstance($bool = true)  
+    {  
+        return $bool;  
+    }
 
-	public function createSubaccount($account_id, $FCM=NULL, $APNS=NULL, $VOIP=FALSE)
-	{
-		$name = "{$this->config['name']}_{$this->config['env']}_{$account_id}";
-		$twilio = new Client($this->config['accountSid'], $this->config['authToken']);
-		$sub_account = $twilio->api->v2010->accounts
+    public function createSubaccount($account_id, $FCM=NULL, $APNS=NULL)
+    {
+        $name = "{$this->config['name']}_{$this->config['env']}_{$account_id}";
+        $twilio = new Client($this->config['accountSid'], $this->config['authToken']);
+        $sub_account = $twilio->api->v2010->accounts
                               ->create(array("friendlyName" => $name));
         $client = new Client($sub_account->sid, $sub_account->authToken);
 
@@ -32,10 +32,10 @@ class Communicate
                  ->create(array('friendlyName' => $account_id));
 
         $array = [
-        	'sid'   => $sub_account->sid,
-        	'token' => $sub_account->authToken,
-        	'api_key' => $new_key->sid,
-        	'api_secret' => $new_key->secret
+            'sid'   => $sub_account->sid,
+            'token' => $sub_account->authToken,
+            'api_key' => $new_key->sid,
+            'api_secret' => $new_key->secret
         ];
 
         //credentials for firebase
@@ -46,31 +46,31 @@ class Communicate
                                               "friendlyName" => "FCMCredentialFor{$account->id}",
                                               "secret" => getenv('FCM_SECRET')
                                          ) 
-                                 );    	
-	        $array_merge = [
-	        	'FCM_push_credential' => $FCM_credential->sid
-	        ];
-	        $array = array_merge($array,$array_merge);*/
+                                 );     
+            $array_merge = [
+                'FCM_push_credential' => $FCM_credential->sid
+            ];
+            $array = array_merge($array,$array_merge);*/
         }
 
         //APNS for IOS notification, se deberia configurar los certificados
         if($APNS !== NULL){
-	        \Log::info('entro APNS');
-	        /*$env = getenv('APP_ENV');
-	        $credentials = \Config::get('services.APNS.'.$env);
-	        $APN_credential = $client->notify->v1->credentials
-	                                ->create("apn", // type
-	                                         array(
-	                                             "certificate" => $credentials['certificate'],
-	                                             "friendlyName" => "APNCredentialFor{$account->id}",
-	                                             "privateKey" => $credentials['privateKey'],
-	                                             "sandbox" => (boolean) $credentials['sandbox']
-	                                         )
-	                                );
-	        $array_merge = [
-	        	'APN_push_credential' => $APN_credential->sid
-	        ];
-	        $array = array_merge($array,$array_merge);  */	
+            \Log::info('entro APNS');
+            /*$env = getenv('APP_ENV');
+            $credentials = \Config::get('services.APNS.'.$env);
+            $APN_credential = $client->notify->v1->credentials
+                                    ->create("apn", // type
+                                             array(
+                                                 "certificate" => $credentials['certificate'],
+                                                 "friendlyName" => "APNCredentialFor{$account->id}",
+                                                 "privateKey" => $credentials['privateKey'],
+                                                 "sandbox" => (boolean) $credentials['sandbox']
+                                             )
+                                    );
+            $array_merge = [
+                'APN_push_credential' => $APN_credential->sid
+            ];
+            $array = array_merge($array,$array_merge);  */  
         }
 
         $application = $client->api->applications->create('Main', [
@@ -90,46 +90,40 @@ class Communicate
             'SmsFallbackMethod'    => 'POST'
         ]);
 
-	    $array_merge = [
-    		'application_sid' => $application->sid
-	    ];
-	    $array = array_merge($array,$array_merge); 
-
-        //convert automaticly in VOIP the numbers, at this moment are not going to be used
-        if($VOIP === true){
-	        $voip_car = $client->applications->create('VoIP', [
-	            'VoiceUrl'             => "{$this->config['url']}/twilio-mobile/voice/{account_id}",
-	            'VoiceMethod'          => 'POST'
-	        ]);
-		    
-		    $array_merge = [
-	    		'voip_sid' => $voip_car->sid
-		    ];
-	    	$array = array_merge($array,$array_merge); 	
-        }
+        $voip_car = $client->applications->create('VoIP', [
+            'VoiceUrl'             => "{$this->config['url']}/twilio-mobile/voice/{account_id}",
+            'VoiceMethod'          => 'POST'
+        ]);
+        
+        $array_merge = [
+            'application_sid' => $application->sid,
+            'voip_sid' => $voip_car->sid
+        ];
+        $array = array_merge($array,$array_merge);  
+        
 
         $this->conf->setInfrastructureConfig('twilio', 'authentication', $array, $account_id);
-	}
+    }
 
-	public function checkPhone($account_id, $phone)
-	{
-		$client=$this->conf->getTwilioClient($account_id);
-    	try {
-  			$number = $client->lookups->phoneNumbers($phone)->fetch();
-  			return true;
+    public function checkPhone($account_id, $phone)
+    {
+        $client=$this->conf->getTwilioClient($account_id);
+        try {
+            $number = $client->lookups->phoneNumbers($phone)->fetch();
+            return true;
         } catch (\Exception $e) {
             return false;
         }
-	}
+    }
 
-	public function findAvailable($account_id, $area_code)
+    public function findAvailable($account_id, $area_code)
     {
         //area code or country iso
         $client=$this->conf->getTwilioClient($account_id);
         try {
             $length = strlen($area_code);
             if($length>3){
-            	return false;
+                return false;
             }
             if($length == 2){ # search by a country ISO code
                 try {
@@ -195,8 +189,8 @@ class Communicate
 
     public function findNumbersByFeatures($account_id, $iso_country, $options)
     {
-		//iso country
-		try{
+        //iso country
+        try{
             $client=$this->conf->getTwilioClient($account_id);
             $numbers = $client->availablePhoneNumbers($iso_country)->local->read(
                 $options
@@ -212,34 +206,110 @@ class Communicate
         return $numbersData;
     }
 
-	public function getConfig(){
-		return $this->config;
-	}
+    public function findTollFreeNumbers($account_id, $iso_country, $optional = [])
+    {
+        //iso country
+        try{
+            $client=$this->conf->getTwilioClient($account_id);
+            $numbers = $client->availablePhoneNumbers($iso_country)->tollFree->read(
 
-	public function getNumbers(){
-		$twilio  = new Client($this->config['accountSid'], $this->config['authToken']);
-		$account = $twilio->api->v2010->accounts($this->config['subaccount'])->fetch();
-		$incomingPhoneNumbers = $account->incomingPhoneNumbers->read();
+            );
+            $numbersData = Array();
+            foreach($numbers as $number){
+                $data = $this->conf->processData($number);
+                array_push($numbersData, $data);
+            }
+        }catch (\RestException $e) {
+            $numbersData =[];
+        }
+        return $numbersData;
+    }
 
-		$n = [];
-		foreach ($incomingPhoneNumbers as $number) {
-			$n[] = (object) [ 'phoneNumber' => $number->phoneNumber,
-				     'sid'		   => $number->sid ];
-		}
+    public function createPhoneNumber($account_id, $number, $voip)
+    {
+       $client = $this->conf->getTwilioClient($account_id);
+        try {
 
-		return $n;
-	}
+            //TODO: don't use route here
+            $params = [
+                'PhoneNumber'          => $number,
 
-	public function sendMessage($from, $to, $message)
-	{
-		try 
-		{
-			$twilio  = new Client($this->config['accountSid'], $this->config['authToken']);
-			$account = $twilio->api->v2010->accounts($this->config['subaccount'])->fetch();
-			$message = $account->messages->create($to, ["body"=>$message, "from"=>$from]);
-			return $message;
-		} catch(TwilioException $e) {
-			return $e->getMessage();
-		}
-	}
+                'VoiceUrl'             => "{$this->config['url']}/{$account_id}/infrastructure/phone/calls/initial",
+                'VoiceMethod'          => 'POST',
+
+                'VoiceFallbackUrl'     => "{$this->config['url']}/{$account_id}/infrastructure/phone/calls/initial",
+                'VoiceFallbackMethod'  => 'POST',
+
+                'StatusCallback'       => "{$this->config['url']}/{$account_id}/infrastructure/phone/calls/status",
+                'StatusCallbackMethod' => 'POST',
+
+                'SmsUrl'               =>"{$this->config['url']}/infrastructure/tracking/phone/incoming?account_id={$account_id}&message_type=sms",
+                'SmsMethod'            => 'POST',
+
+                'SmsFallbackUrl'       => "{$this->config['url']}/infrastructure/tracking/phone/incoming?account_id={$account_id}&message_type=sms",
+                'SmsFallbackMethod'    => 'POST'
+            ];
+         
+            $number = $client->incomingPhoneNumbers->create($params);
+
+            if($voip === true){
+                $data = $this->conf->get("twilio", "authentication", $account_id);
+                try {
+                    $client->incomingPhoneNumbers($number->sid)
+                        ->update([
+                            'VoiceApplicationSid' => $data['voip_sid']
+                        ]);
+                    
+                } catch (\RestException $e) {
+                    return "Error inesperado al convertir en VOIP";
+                }
+            }
+            return $number->sid;
+
+        } catch (\RestException $e) {
+            return "Error inesperado al crear el numero";
+        }
+    }
+
+    public function deleteNumber($account_id, $number_sid)
+    {
+        try {
+            $client = $this->conf->getTwilioClient($account_id);
+            $client->incomingPhoneNumbers($number_sid)->delete();
+            return true;
+        } catch (\RestException $e) {
+            return "Error inesperado al borrar el numero";
+        }
+    }
+
+    public function getConfig(){
+        return $this->config;
+    }
+
+    public function getNumbers(){
+        $twilio  = new Client($this->config['accountSid'], $this->config['authToken']);
+        $account = $twilio->api->v2010->accounts($this->config['subaccount'])->fetch();
+        $incomingPhoneNumbers = $account->incomingPhoneNumbers->read();
+
+        $n = [];
+        foreach ($incomingPhoneNumbers as $number) {
+            $n[] = (object) [ 'phoneNumber' => $number->phoneNumber,
+                     'sid'         => $number->sid ];
+        }
+
+        return $n;
+    }
+
+    public function sendMessage($from, $to, $message)
+    {
+        try 
+        {
+            $twilio  = new Client($this->config['accountSid'], $this->config['authToken']);
+            $account = $twilio->api->v2010->accounts($this->config['subaccount'])->fetch();
+            $message = $account->messages->create($to, ["body"=>$message, "from"=>$from]);
+            return $message;
+        } catch(TwilioException $e) {
+            return $e->getMessage();
+        }
+    }
 } 
